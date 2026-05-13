@@ -1,0 +1,47 @@
+# Conservative starter config for autoresearch-qualitative.
+# This file is a template only. Runtime code must never load it implicitly;
+# operators must pass it explicitly with --config or copy it to a run config.
+
+project_root: .
+objective: "Improve the project against the rubric while preserving safety boundaries."
+max_iterations: 5
+max_runtime_minutes: 60
+max_diff_lines: 800
+
+protected_paths:
+  - .env
+  - .env.*
+  - secrets/**
+  - credentials/**
+  - .git/**
+
+allowed_commands:
+  - npm test
+  - npm run lint
+  - npm run build
+
+baseline_commands:
+  - npm test
+
+judge:
+  mode: host-agent
+  rubric: "Keep changes only when evidence shows the objective improved without weakening safety, maintainability, or user-facing correctness."
+
+criteria:
+  - id: correctness
+    description: "The change satisfies the stated objective and does not regress existing behavior."
+    weight: 0.4
+  - id: safety
+    description: "The change respects protected paths, command allowlists, budgets, and evidence redaction."
+    weight: 0.35
+  - id: maintainability
+    description: "The change remains simple, reviewable, and aligned with project conventions."
+    weight: 0.25
+
+evidence:
+  retain_artifacts: true
+  redact_secrets: true
+
+decision_policy:
+  keep_if: "all_required_criteria_pass && no_safety_concerns && evidence_supports_objective"
+  revert_if: "any_safety_concern || baseline_regression || evidence_missing"
