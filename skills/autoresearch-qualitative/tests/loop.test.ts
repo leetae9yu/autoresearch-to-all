@@ -30,6 +30,13 @@ function writeConfig(projectRoot: string, overrides: Record<string, unknown> = {
     },
     criteria: [{ id: "correctness", description: "Evidence supports the objective.", weight: 1 }],
     evidence: { retain_artifacts: true, redact_secrets: true },
+    interview: {
+      required: true,
+      status: "completed",
+      answers: {
+        objective: "Improve qualitative behavior safely.",
+      },
+    },
     decision_policy: {
       keep_if: "all_required_criteria_pass && no_safety_concerns && evidence_supports_objective && recommendation_is_keep",
       revert_if: "any_safety_concern || baseline_regression || evidence_missing",

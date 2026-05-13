@@ -23,7 +23,7 @@ The required run flow is:
 
 `Config → Preflight → Baseline → Experiment → Judge → Decision → Ledger → Report`
 
-1. **Config**: The Skill front door receives an explicit config path. `config` validates schema, required budgets, declared workspace, allowed commands, judge settings, criteria, evidence policy, and decision policy.
+1. **Config**: The Skill front door receives an explicit config path. Before execution, the host agent runs the pre-run interview and captures answers in config metadata. `config` validates schema, required budgets, declared workspace, allowed commands, judge settings, criteria, evidence policy, interview metadata, and decision policy.
 2. **Preflight**: `safety` checks the normalized config against filesystem boundaries, protected paths, budget values, command allowlists, and sandbox controls. Failure stops the run before mutation.
 3. **Baseline**: `adapter` discovers the project and executes configured baseline checks. Baseline outputs and artifact summaries become evidence references.
 4. **Experiment**: `loop` requests one bounded experiment at a time through `adapter`, constrained by mutation scopes, budgets, protected paths, and allowed commands.

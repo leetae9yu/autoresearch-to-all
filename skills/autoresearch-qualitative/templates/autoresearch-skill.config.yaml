@@ -42,6 +42,19 @@ evidence:
   retain_artifacts: true
   redact_secrets: true
 
+interview:
+  required: true
+  status: pending
+  answers:
+    # Filled by the pre-run interview before execution starts.
+    objective: ""
+    success_evidence: ""
+    safety_boundaries: ""
+    allowed_commands: ""
+    budget: ""
+    decision_policy: ""
+    evidence_retention: ""
+
 decision_policy:
   keep_if: "all_required_criteria_pass && no_safety_concerns && evidence_supports_objective"
   revert_if: "any_safety_concern || baseline_regression || evidence_missing"

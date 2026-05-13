@@ -20,6 +20,17 @@ criteria:
 evidence:
   retain_artifacts: true
   redact_secrets: true
+interview:
+  required: true
+  status: completed
+  answers:
+    objective: "Improve the calculator while preserving existing arithmetic behavior."
+    success_evidence: "node --test tests/calculator.test.ts"
+    safety_boundaries: ".env and secrets/** are protected."
+    allowed_commands: "node --test tests/calculator.test.ts"
+    budget: "2 iterations, 10 minutes, 200 diff lines."
+    decision_policy: "Keep only safe calculator improvements with passing tests."
+    evidence_retention: "Retain artifacts and redact secrets."
 decision_policy:
   keep_if: "all_required_criteria_pass && no_safety_concerns && evidence_supports_objective && recommendation_is_keep"
   revert_if: "any_safety_concern || baseline_regression || evidence_missing"

@@ -4,7 +4,13 @@
 
 set -euo pipefail
 
-TEMPLATES_DIR="${TEMPLATES_DIR:-skills/autoresearch-qualitative/templates}"
+if [[ -z "${TEMPLATES_DIR:-}" ]]; then
+  if [[ -d "templates" ]]; then
+    TEMPLATES_DIR="templates"
+  else
+    TEMPLATES_DIR="skills/autoresearch-qualitative/templates"
+  fi
+fi
 RUBRIC="$TEMPLATES_DIR/rubric.md"
 JUDGE="$TEMPLATES_DIR/judge-prompt.md"
 REVIEW="$TEMPLATES_DIR/review-prompt.md"
@@ -12,6 +18,7 @@ CODEX_HANDOFF="$TEMPLATES_DIR/codex-goal-handoff.md"
 CANDIDATE_CONTRACT="$TEMPLATES_DIR/candidate-contract.json"
 EVIDENCE_FRAGMENT="$TEMPLATES_DIR/fragments/evidence-contract.md"
 GOAL_BOUNDARY_FRAGMENT="$TEMPLATES_DIR/fragments/codex-goal-boundary.md"
+PRE_RUN_INTERVIEW="$TEMPLATES_DIR/pre-run-interview.md"
 
 ERRORS=0
 
@@ -128,6 +135,19 @@ fi
 if check_file "$GOAL_BOUNDARY_FRAGMENT"; then
   check_contains "$GOAL_BOUNDARY_FRAGMENT" "not the durable run state" "goal boundary rejects durable goal state"
   check_contains "$GOAL_BOUNDARY_FRAGMENT" "candidate contract" "goal boundary mentions candidate contract"
+fi
+
+echo ""
+echo "=== Checking pre-run interview template ==="
+if check_file "$PRE_RUN_INTERVIEW"; then
+  check_contains "$PRE_RUN_INTERVIEW" "question/interview tool" "interview uses host question tool"
+  check_contains "$PRE_RUN_INTERVIEW" "Objective" "interview asks objective"
+  check_contains "$PRE_RUN_INTERVIEW" "Success evidence" "interview asks success evidence"
+  check_contains "$PRE_RUN_INTERVIEW" "Safety boundaries" "interview asks safety boundaries"
+  check_contains "$PRE_RUN_INTERVIEW" "Allowed commands" "interview asks allowed commands"
+  check_contains "$PRE_RUN_INTERVIEW" "Budget" "interview asks budget"
+  check_contains "$PRE_RUN_INTERVIEW" "Decision policy" "interview asks decision policy"
+  check_contains "$PRE_RUN_INTERVIEW" "interview:" "interview output includes config block"
 fi
 
 echo ""

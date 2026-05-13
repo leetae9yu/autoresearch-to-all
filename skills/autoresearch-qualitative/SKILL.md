@@ -10,13 +10,15 @@ The Skill is user-facing: it explains how an operator selects a config, what art
 
 Use the Skill when a project has an explicit experiment objective, a bounded workspace, allowed commands, baseline checks, mutation limits, judge criteria, and evidence retention settings. A normal run follows this high-level sequence:
 
-1. Operator invokes the Skill with an explicit config path.
-2. The Skill validates config and safety budgets before any project mutation.
-3. The adapter discovers the project and records baseline evidence.
-4. The loop applies one bounded experiment at a time within declared mutation scopes.
-5. The judge evaluates evidence against the configured rubric and criteria.
-6. The decision policy keeps or reverts the experiment.
-7. The ledger records the immutable outcome and the report summarizes learnings.
+1. Operator invokes the Skill with an explicit config path or asks to start an autoresearch loop.
+2. The host agent runs the pre-run interview before mutation, using a question/interview tool when available.
+3. The interview answers are captured in config metadata and the operator confirms the generated or updated config.
+4. The Skill validates config and safety budgets before any project mutation.
+5. The adapter discovers the project and records baseline evidence.
+6. The loop applies one bounded experiment at a time within declared mutation scopes.
+7. The judge evaluates evidence against the configured rubric and criteria.
+8. The decision policy keeps or reverts the experiment.
+9. The ledger records the immutable outcome and the report summarizes learnings.
 
 The Skill must refuse execution when the config is absent, incomplete, or outside safety limits. Documentation-only, dry-run, or report-only modes may exist later, but execution modes still require explicit configuration.
 
@@ -35,6 +37,24 @@ Config responsibilities:
 - Define keep/revert policy for experiment decisions.
 
 No autonomous run may begin without an explicit config. Defaults may help operators create a config, but defaults must not silently authorize mutation.
+
+## Pre-run Interview
+
+Before starting an experiment loop, interview the operator to fill the config instead of guessing. If the host has a structured question or interview tool, use it; otherwise ask concise chat questions. Use `templates/pre-run-interview.md` as the question contract.
+
+Follow an intent-first interview style: ask one targeted question at a time, focus each question on the weakest remaining clarity dimension, and stop the assistant turn whenever waiting for the operator's answer. Do not infer missing answers just to continue the loop.
+
+Minimum interview topics:
+
+- objective and non-goals
+- evidence that proves improvement
+- exact baseline/check commands the loop may run
+- protected paths and safety boundaries
+- budgets for iterations, runtime, and diff size
+- keep/revert decision policy
+- artifact retention and redaction requirements
+
+Record the result under `interview` in the config. A completed interview should set `interview.status: completed` and include the answers used to derive `objective`, `allowed_commands`, `baseline_commands`, `protected_paths`, budgets, evidence policy, and decision policy. If the operator explicitly skips the interview, set `interview.status: skipped` and record the reason; skipping never relaxes required config validation.
 
 ## Safety
 

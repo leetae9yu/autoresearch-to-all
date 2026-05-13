@@ -49,6 +49,13 @@ function validConfig(overrides: any = {}): any {
       retain_artifacts: true,
       redact_secrets: true,
     },
+    interview: {
+      required: true,
+      status: "completed",
+      answers: {
+        objective: "Improve qualitative behavior safely.",
+      },
+    },
     decision_policy: {
       keep_if: "score >= threshold && no_safety_concerns",
       revert_if: "baseline_regression || safety_concern",
@@ -119,6 +126,46 @@ test("destructive command is blocked", () => {
     baseline_commands: ["npm test"],
   });
   assert.throws(() => preflight(config, cleanWorkspace()), /destructive or network command blocked/);
+});
+
+test("non-execution modes do not require runnable command allowlists", () => {
+  const dryRunConfig = validConfig({
+    mode: "dry-run",
+    allowed_commands: [],
+    baseline_commands: ["node --version"],
+  });
+  const dryRun = preflight(dryRunConfig, cleanWorkspace());
+  assert.equal(dryRun.approved, true);
+
+  const reportOnlyConfig = validConfig({
+    mode: "report-only",
+    allowed_commands: [],
+    baseline_commands: ["node --version"],
+  });
+  const reportOnly = preflight(reportOnlyConfig, cleanWorkspace());
+  assert.equal(reportOnly.approved, true);
+});
+
+test("execution mode requires a completed or skipped pre-run interview", () => {
+  const pendingConfig = validConfig({
+    interview: {
+      required: true,
+      status: "pending",
+      answers: {},
+    },
+  });
+  assert.throws(() => preflight(pendingConfig, cleanWorkspace()), /pre-run interview must be completed/);
+
+  const skippedConfig = validConfig({
+    interview: {
+      required: true,
+      status: "skipped",
+      answers: {
+        skip_reason: "operator supplied config directly",
+      },
+    },
+  });
+  assert.equal(preflight(skippedConfig, cleanWorkspace()).approved, true);
 });
 
 test("budget exhaustion stops execution", () => {

@@ -6,6 +6,15 @@ const DEFAULT_PROTECTED_PATHS = [".env", "secrets/**"];
 const EXECUTION_MODES = new Set(["execute", "run", "mutation"]);
 const NON_EXECUTION_MODES = new Set(["dry-run", "report-only"]);
 
+function isExecutionMode(mode: any): boolean {
+  return EXECUTION_MODES.has(String(mode || "execute"));
+}
+
+function isKnownMode(mode: any): boolean {
+  const normalized = String(mode || "execute");
+  return EXECUTION_MODES.has(normalized) || NON_EXECUTION_MODES.has(normalized);
+}
+
 function countIndent(line: string): number {
   return (line.match(/^ */)?.[0] || "").length;
 }
@@ -258,6 +267,42 @@ function normalizeDecisionRule(policy: any, fieldPath: any): any {
   throw new Error(`Invalid required field: decision_policy.${fieldPath} must be a non-empty string or rule object`);
 }
 
+function normalizeInterview(config: any): any {
+  const interview = config.interview;
+  if (interview === undefined) {
+    return {
+      required: true,
+      status: "pending",
+      answers: {},
+    };
+  }
+
+  if (!interview || typeof interview !== "object" || Array.isArray(interview)) {
+    throw new Error("Invalid required field: interview must be an object when provided");
+  }
+
+  const required = interview.required === undefined ? true : interview.required;
+  if (typeof required !== "boolean") {
+    throw new Error("Invalid required field: interview.required must be a boolean");
+  }
+
+  const status = interview.status === undefined ? "pending" : assertString(interview, "status");
+  if (!["pending", "completed", "skipped"].includes(status)) {
+    throw new Error("Invalid required field: interview.status must be pending, completed, or skipped");
+  }
+
+  const answers = interview.answers === undefined ? {} : interview.answers;
+  if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
+    throw new Error("Invalid required field: interview.answers must be an object");
+  }
+
+  return {
+    required,
+    status,
+    answers,
+  };
+}
+
 function resolveConfigPathFromArgs(argv: any): any {
   const args = Array.isArray(argv) ? argv : [];
   const configIndex = args.indexOf("--config");
@@ -295,7 +340,7 @@ function validateConfig(configPath: any, options: any = {}): any {
   const configDirectory = path.dirname(absoluteConfigPath);
   const realConfigDirectory = fs.realpathSync(configDirectory);
   const mode = options.mode || config.mode || "execute";
-  if (!EXECUTION_MODES.has(mode) && !NON_EXECUTION_MODES.has(mode)) {
+  if (!isKnownMode(mode)) {
     throw new Error(`Invalid mode: ${mode}`);
   }
 
@@ -310,7 +355,7 @@ function validateConfig(configPath: any, options: any = {}): any {
     throw new Error("Invalid path in project_root: project_root must not escape the config directory");
   }
 
-  const shouldRequireAllowedCommands = EXECUTION_MODES.has(mode);
+  const shouldRequireAllowedCommands = isExecutionMode(mode);
   const allowedCommands = normalizeStringList(assertPresent(config, "allowed_commands"), "allowed_commands", {
     requireNonEmpty: shouldRequireAllowedCommands,
   });
@@ -335,6 +380,7 @@ function validateConfig(configPath: any, options: any = {}): any {
       retain_artifacts: assertBoolean(config, "evidence.retain_artifacts"),
       redact_secrets: assertBoolean(config, "evidence.redact_secrets"),
     },
+    interview: normalizeInterview(config),
     decision_policy: {
       keep_if: normalizeDecisionRule(assertPresent(config, "decision_policy"), "keep_if"),
       revert_if: normalizeDecisionRule(assertPresent(config, "decision_policy"), "revert_if"),
@@ -349,6 +395,10 @@ function loadRuntimeConfig(selector: any, options: any = {}): any {
 
 export {
   DEFAULT_PROTECTED_PATHS,
+  EXECUTION_MODES,
+  NON_EXECUTION_MODES,
+  isExecutionMode,
+  isKnownMode,
   loadRuntimeConfig,
   parseYaml,
   requireExplicitConfigPath,

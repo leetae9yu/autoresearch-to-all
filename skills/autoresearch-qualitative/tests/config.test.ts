@@ -107,6 +107,38 @@ test("empty allowed_commands is permitted in dry-run mode", () => {
   assert.equal(normalized.mode, "dry-run");
 });
 
+test("interview metadata defaults to a required pending interview", () => {
+  const directory = createTempProject();
+  const configPath = writeConfig(directory, validConfig());
+
+  const normalized = validateConfig(configPath);
+
+  assert.deepEqual(normalized.interview, {
+    required: true,
+    status: "pending",
+    answers: {},
+  });
+});
+
+test("interview metadata can capture completed pre-run answers", () => {
+  const directory = createTempProject();
+  const configPath = writeConfig(directory, validConfig({
+    interview: {
+      required: true,
+      status: "completed",
+      answers: {
+        objective: "Improve onboarding",
+        verification: "npm test",
+      },
+    },
+  }));
+
+  const normalized = validateConfig(configPath);
+
+  assert.equal(normalized.interview.status, "completed");
+  assert.equal(normalized.interview.answers.objective, "Improve onboarding");
+});
+
 test("missing config path causes explicit execution refusal", () => {
   assert.throws(() => requireExplicitConfigPath([]), /Refusing to execute without an explicit --config path/);
   assert.throws(() => validateConfig(""), /Refusing to execute without an explicit --config path/);
@@ -122,6 +154,7 @@ test("protected paths default includes .env and secrets/** if not overridden", (
 
   assert.ok(normalized.protected_paths.includes(".env"));
   assert.ok(normalized.protected_paths.includes("secrets/**"));
+  assert.equal(normalized.interview.required, true);
 });
 
 test("explicit protected paths override defaults", () => {

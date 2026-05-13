@@ -8,6 +8,7 @@ const MAX_BUDGET_LIMITS = {
 };
 
 const REQUIRED_SECRET_PROTECTIONS = [".env", "secrets/**"];
+const EXECUTION_MODES = new Set(["execute", "run", "mutation"]);
 
 const DESTRUCTIVE_PATTERNS = [
   /(^|\s)rm\s+[^\n;|&]*-[^\n;|&]*r[^\n;|&]*f[^\n;|&]*(\s+|=)(\/|~)(\s|$|;|&&|\|\|)/i,
@@ -22,6 +23,10 @@ const SHELL_CONTROL_PATTERN = /[;&|`$<>]/;
 
 function fail(reason: any): any {
   throw new Error(`Safety preflight failed: ${reason}`);
+}
+
+function isExecutionMode(mode: any): boolean {
+  return EXECUTION_MODES.has(String(mode || "execute"));
 }
 
 function normalizeCommand(command: any): any {
@@ -222,12 +227,13 @@ function assertBudgets(config: any, workspaceState: any): any {
 }
 
 function assertCommands(config: any): any {
+  const executionMode = isExecutionMode(config.mode);
   const declaredCommands = [
     ...(Array.isArray(config.allowed_commands) ? config.allowed_commands : []),
-    ...(Array.isArray(config.baseline_commands) ? config.baseline_commands : []),
+    ...(executionMode && Array.isArray(config.baseline_commands) ? config.baseline_commands : []),
   ];
 
-  if ((config.mode || "execute") !== "dry-run" && config.allowed_commands.length === 0) {
+  if (executionMode && config.allowed_commands.length === 0) {
     fail("allowed_commands must not be empty in execution mode");
   }
 
@@ -235,8 +241,19 @@ function assertCommands(config: any): any {
     if (isDestructiveCommand(command)) fail(`destructive or network command blocked: ${command}`);
   }
 
-  for (const command of config.baseline_commands || []) {
-    if (!isCommandAllowed(command, config.allowed_commands)) fail(`baseline command is not allowed: ${command}`);
+  if (executionMode) {
+    for (const command of config.baseline_commands || []) {
+      if (!isCommandAllowed(command, config.allowed_commands)) fail(`baseline command is not allowed: ${command}`);
+    }
+  }
+}
+
+function assertInterviewReady(config: any): any {
+  if (!isExecutionMode(config.mode)) return;
+  const interview = config.interview || { required: true, status: "pending" };
+  if (interview.required === false) return;
+  if (interview.status !== "completed" && interview.status !== "skipped") {
+    fail("pre-run interview must be completed or explicitly skipped before execution");
   }
 }
 
@@ -266,6 +283,7 @@ function preflight(config: any, workspaceState: any = {}): any {
   assertProtectedPaths(config, workspaceState);
   assertBudgets(config, workspaceState);
   assertCommands(config);
+  assertInterviewReady(config);
   assertSandboxPrepared(config, workspaceState, disposableCopy);
 
   const controls = {
@@ -294,7 +312,9 @@ function preflight(config: any, workspaceState: any = {}): any {
 export {
   isCommandAllowed,
   isDestructiveCommand,
+  isExecutionMode,
   isPathProtected,
+  assertInterviewReady,
   verifyNoProtectedPathTouched,
   preflight,
 };
