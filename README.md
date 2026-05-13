@@ -14,6 +14,35 @@ Inspired by Andrej Karpathy's [`autoresearch`](https://github.com/karpathy/autor
 - `skills/autoresearch-qualitative/templates/` — config, rubric, judge, and review templates
 - `skills/autoresearch-qualitative/tests/` — unit, integration, and fixture E2E tests
 
+## Install for Codex
+
+Run this from the project where you want Codex to use the skill:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/install.sh | bash
+```
+
+This installs the skill to `.codex/skills/autoresearch-qualitative` and copies a starter `autoresearch-skill.config.yaml` when one does not already exist.
+
+Then add this to your project instructions, such as `AGENTS.md`:
+
+```md
+Use `.codex/skills/autoresearch-qualitative/SKILL.md` for qualitative autoresearch loops.
+Require explicit config at `autoresearch-skill.config.yaml` before mutating code.
+```
+
+Install options:
+
+```bash
+# Install somewhere else, e.g. OpenCode-style skills
+AUTORESEARCH_TO_ALL_TARGET_DIR=.opencode/skills/autoresearch-qualitative \
+  curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/install.sh | bash
+
+# Skip copying the starter config
+AUTORESEARCH_TO_ALL_INSTALL_CONFIG=0 \
+  curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/install.sh | bash
+```
+
 ## Verify
 
 ```bash
