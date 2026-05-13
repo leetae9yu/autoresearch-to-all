@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "status": "candidate",
+  "base_commit": "<git sha before the iteration>",
+  "candidate_commit": "<git sha for the candidate, or null for noop/abort/interrupted>",
+  "description": "Short evidence-backed description of the candidate change.",
+  "changed_files": [
+    "relative/path.ts"
+  ],
+  "commands": [
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "evidence_path": ".autoresearch-runs/<run-id>/iteration-<n>/npm-test.log"
+    }
+  ],
+  "evidence_paths": [
+    ".autoresearch-runs/<run-id>/iteration-<n>/summary.md"
+  ],
+  "notes": [
+    "Any constraints, uncertainty, or known follow-up work."
+  ],
+  "created_at": "2026-05-13T00:00:00.000Z"
+}

@@ -8,6 +8,10 @@ TEMPLATES_DIR="${TEMPLATES_DIR:-skills/autoresearch-qualitative/templates}"
 RUBRIC="$TEMPLATES_DIR/rubric.md"
 JUDGE="$TEMPLATES_DIR/judge-prompt.md"
 REVIEW="$TEMPLATES_DIR/review-prompt.md"
+CODEX_HANDOFF="$TEMPLATES_DIR/codex-goal-handoff.md"
+CANDIDATE_CONTRACT="$TEMPLATES_DIR/candidate-contract.json"
+EVIDENCE_FRAGMENT="$TEMPLATES_DIR/fragments/evidence-contract.md"
+GOAL_BOUNDARY_FRAGMENT="$TEMPLATES_DIR/fragments/codex-goal-boundary.md"
 
 ERRORS=0
 
@@ -98,6 +102,32 @@ if check_file "$REVIEW"; then
   check_contains "$REVIEW" "proceed" "recommendation option: proceed"
   check_contains "$REVIEW" "revise" "recommendation option: revise"
   check_contains "$REVIEW" "reject" "recommendation option: reject"
+fi
+
+echo ""
+echo "=== Checking Codex handoff templates ==="
+if check_file "$CODEX_HANDOFF"; then
+  check_contains "$CODEX_HANDOFF" 'Codex `/goal`' "handoff explains Codex goal boundary"
+  check_contains "$CODEX_HANDOFF" "source of truth" "handoff names source of truth"
+  check_contains "$CODEX_HANDOFF" "{candidate_path}" "handoff includes candidate placeholder"
+  check_contains "$CODEX_HANDOFF" "candidate.json" "handoff requires candidate artifact"
+fi
+
+if check_file "$CANDIDATE_CONTRACT"; then
+  check_contains "$CANDIDATE_CONTRACT" "schema_version" "candidate schema has version"
+  check_contains "$CANDIDATE_CONTRACT" "base_commit" "candidate schema has base commit"
+  check_contains "$CANDIDATE_CONTRACT" "candidate_commit" "candidate schema has candidate commit"
+  check_contains "$CANDIDATE_CONTRACT" "changed_files" "candidate schema has changed files"
+fi
+
+if check_file "$EVIDENCE_FRAGMENT"; then
+  check_contains "$EVIDENCE_FRAGMENT" "Missing evidence" "evidence fragment rejects missing evidence"
+  check_contains "$EVIDENCE_FRAGMENT" "ledger" "evidence fragment mentions ledger"
+fi
+
+if check_file "$GOAL_BOUNDARY_FRAGMENT"; then
+  check_contains "$GOAL_BOUNDARY_FRAGMENT" "not the durable run state" "goal boundary rejects durable goal state"
+  check_contains "$GOAL_BOUNDARY_FRAGMENT" "candidate contract" "goal boundary mentions candidate contract"
 fi
 
 echo ""
