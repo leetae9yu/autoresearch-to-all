@@ -1,0 +1,9 @@
+.sisyphus/
+.autoresearch-runs/
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+secrets/
+credentials/
