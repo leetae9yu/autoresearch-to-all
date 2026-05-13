@@ -1,5 +1,7 @@
 # autoresearch-to-all
 
+[한국어](README_ko.md) | English
+
 Autoresearch-style qualitative harness engineering for coding agents.
 
 This repository contains a reusable `autoresearch-qualitative` skill that generalizes the repeated experiment loop from quantitative metric optimization into qualitative project-improvement runs: explicit config, safety preflight, evidence capture, LLM-as-judge review, keep/revert decisions, immutable ledger entries, and final reports.
