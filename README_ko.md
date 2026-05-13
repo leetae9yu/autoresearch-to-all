@@ -48,6 +48,30 @@ AUTORESEARCH_TO_ALL_INSTALL_CONFIG=0 \
   curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/install.sh | bash
 ```
 
+설치된 프로젝트 상태를 나중에 점검하려면 doctor 모드를 실행하세요.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/install.sh | bash -s -- --doctor
+```
+
+## Codex goal handoff
+
+이 Skill은 Codex `/goal`을 한 iteration을 이어가기 위한 보조 수단으로만 취급합니다. durable source of truth는 harness가 소유하는 config, candidate artifact, ledger, report입니다.
+
+관련 템플릿:
+
+- `templates/codex-goal-handoff.md` — Codex iteration에 넘기는 handoff 프롬프트
+- `templates/candidate-contract.json` — worker agent가 작성해야 하는 candidate artifact schema
+- `templates/fragments/evidence-contract.md` — 정성 판단에 필요한 evidence 규칙
+- `templates/fragments/codex-goal-boundary.md` — Codex `/goal`과 harness 상태의 경계
+
+권장 흐름:
+
+1. Harness가 mission, rubric, ledger 경로를 준비합니다.
+2. Codex는 `/goal`을 사용해 한 candidate-producing iteration만 이어갑니다.
+3. Codex는 candidate contract에 맞춰 `candidate.json`을 작성합니다.
+4. Harness가 평가, judge, keep/revert 결정을 수행합니다.
+
 ## 사용 흐름
 
 1. Skill을 설치합니다.

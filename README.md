@@ -45,6 +45,30 @@ AUTORESEARCH_TO_ALL_INSTALL_CONFIG=0 \
   curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/install.sh | bash
 ```
 
+To check an installed project later:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/install.sh | bash -s -- --doctor
+```
+
+## Codex goal handoff
+
+The Skill treats Codex `/goal` as an iteration-local continuation tool, not as durable run state. The harness owns config validation, safety preflight, candidate validation, judge calls, keep/revert decisions, ledger entries, and reports.
+
+Useful templates:
+
+- `templates/codex-goal-handoff.md` — prompt handoff for a Codex iteration
+- `templates/candidate-contract.json` — candidate artifact schema written by the worker agent
+- `templates/fragments/evidence-contract.md` — evidence requirements for qualitative judgment
+- `templates/fragments/codex-goal-boundary.md` — boundary between Codex `/goal` and harness state
+
+Recommended flow:
+
+1. The harness creates/fills mission, rubric, and ledger paths.
+2. Codex uses `/goal` only to continue one candidate-producing iteration.
+3. Codex writes `candidate.json` using the candidate contract.
+4. The harness evaluates, judges, and decides keep/revert.
+
 ## Verify
 
 ```bash
