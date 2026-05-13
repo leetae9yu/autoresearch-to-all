@@ -31,6 +31,7 @@ Then add this to your project instructions, such as `AGENTS.md`:
 ```md
 Use `.codex/skills/autoresearch-qualitative/SKILL.md` for qualitative autoresearch loops.
 Require explicit config at `autoresearch-skill.config.yaml` before mutating code.
+Run the pre-run interview from `.codex/skills/autoresearch-qualitative/templates/pre-run-interview.md` before starting an experiment loop.
 ```
 
 Install options:
@@ -55,8 +56,13 @@ curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/
 
 The Skill treats Codex `/goal` as an iteration-local continuation tool, not as durable run state. The harness owns config validation, safety preflight, candidate validation, judge calls, keep/revert decisions, ledger entries, and reports.
 
+## Pre-run interview
+
+Before execution, the host agent should interview the operator to clarify objective, success evidence, protected paths, allowed commands, budgets, decision policy, and evidence retention. The interview answers are stored under `interview.answers` in the config, and execution preflight refuses to proceed while a required interview remains `pending`.
+
 Useful templates:
 
+- `templates/pre-run-interview.md` — interview/question contract for filling config before mutation
 - `templates/codex-goal-handoff.md` — prompt handoff for a Codex iteration
 - `templates/candidate-contract.json` — candidate artifact schema written by the worker agent
 - `templates/fragments/evidence-contract.md` — evidence requirements for qualitative judgment
@@ -73,9 +79,9 @@ Recommended flow:
 
 ```bash
 cd skills/autoresearch-qualitative
-npx tsc --noEmit
-node --test tests/*.test.ts
-bash tests/verify-templates.sh
+npm exec --yes --package typescript -- tsc --noEmit
+npm test
+npm run verify:templates
 ```
 
 ## License

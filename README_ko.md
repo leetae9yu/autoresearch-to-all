@@ -87,11 +87,14 @@ curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/
 
 ```bash
 cd skills/autoresearch-qualitative
-npx tsc --noEmit
-node --test tests/*.test.ts
-cd ../..
-bash skills/autoresearch-qualitative/tests/verify-templates.sh
+npm exec --yes --package typescript -- tsc --noEmit
+npm test
+npm run verify:templates
 ```
+
+## 사전 인터뷰
+
+실험 루프를 시작하기 전 host agent는 `templates/pre-run-interview.md`의 질문 계약에 따라 목표, 성공 증거, 보호 경로, 허용 명령, 예산, 결정 정책, 증거 보존 정책을 확인해야 합니다. 답변은 config의 `interview.answers`에 기록되며, 필수 인터뷰가 `pending`이면 execution preflight가 진행을 거부합니다.
 
 ## `/goal`과의 차이
 

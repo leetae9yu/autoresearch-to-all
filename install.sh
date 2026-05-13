@@ -117,8 +117,8 @@ run_doctor() {
     printf 'WARN: Node.js not found; skip local TypeScript/test verification\n'
   fi
 
-  if [[ -f "$TARGET_DIR/tsconfig.json" ]] && command -v npx >/dev/null 2>&1; then
-    if (cd "$TARGET_DIR" && npx tsc --noEmit >/dev/null 2>&1); then
+  if [[ -f "$TARGET_DIR/tsconfig.json" ]] && command -v npm >/dev/null 2>&1; then
+    if (cd "$TARGET_DIR" && npm exec --yes --package typescript -- tsc --noEmit >/dev/null 2>&1); then
       printf 'PASS: skill typecheck passes\n'
     else
       printf 'WARN: skill typecheck skipped or unavailable; run from the cloned repository for full verification\n'
@@ -195,15 +195,17 @@ Next steps:
   2. Tell Codex to use: $TARGET_DIR/SKILL.md
   3. Optional verification:
        cd $TARGET_DIR
-       npx tsc --noEmit
-       node --test tests/*.test.ts
+       npm exec --yes --package typescript -- tsc --noEmit
+       npm test
+       npm run verify:templates
   4. Optional doctor check:
-       bash install.sh --doctor
+       curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/install.sh | bash -s -- --doctor
 
 Suggested AGENTS.md snippet:
 
   Use $TARGET_DIR/SKILL.md for qualitative autoresearch loops.
   Require explicit config at $CONFIG_TARGET before mutating code.
+  Run the pre-run interview from $TARGET_DIR/templates/pre-run-interview.md before starting an experiment loop.
   Treat Codex /goal as iteration-local only; the harness ledger/candidate artifacts are the source of truth.
 
 EOF

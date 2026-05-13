@@ -30,14 +30,14 @@ function checksumFile(filePath: any): any {
 
 function countLedgerLines(filePath: any): any {
   if (!fs.existsSync(filePath)) return 0;
-  const contents = fs.readFileSync(filePath, "utf8");
+  const contents: string = fs.readFileSync(filePath, "utf8");
   if (contents === "") return 0;
   return contents.split("\n").filter((line) => line.trim() !== "").length;
 }
 
 function parseLedgerLines(filePath: any): any[] {
   if (!fs.existsSync(filePath)) return [];
-  const contents = fs.readFileSync(filePath, "utf8");
+  const contents: string = fs.readFileSync(filePath, "utf8");
   if (contents.trim() === "") return [];
   return contents
     .split("\n")

@@ -10,7 +10,7 @@ const DEFAULT_SECRET_PATTERNS = [
 
 function parseLedgerFile(ledgerPath: any): any {
   if (!fs.existsSync(ledgerPath)) return [];
-  const contents = fs.readFileSync(ledgerPath, "utf8");
+  const contents: string = fs.readFileSync(ledgerPath, "utf8");
   if (contents.trim() === "") return [];
   return contents
     .split("\n")
