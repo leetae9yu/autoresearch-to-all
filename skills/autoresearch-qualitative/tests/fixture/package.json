@@ -1,0 +1,8 @@
+{
+  "name": "autoresearch-qualitative-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/calculator.test.ts"
+  }
+}

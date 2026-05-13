@@ -1,0 +1,9 @@
+--- a/src/calculator.ts
++++ b/src/calculator.ts
+@@ -1,5 +1,5 @@
+ export function add(left: number, right: number): number {
+-  return left + right;
++  return left - right;
+ }
+ 
+ export function subtract(left: number, right: number): number {

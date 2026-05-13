@@ -1,0 +1,25 @@
+project_root: "."
+objective: "Improve the calculator while preserving existing arithmetic behavior."
+max_iterations: 2
+max_runtime_minutes: 10
+max_diff_lines: 200
+protected_paths:
+  - ".env"
+  - "secrets/**"
+allowed_commands:
+  - "node --test tests/calculator.test.ts"
+baseline_commands:
+  - "node --test tests/calculator.test.ts"
+judge:
+  mode: "mock"
+  rubric: "Keep only safe calculator improvements with passing tests."
+criteria:
+  - id: "correctness"
+    description: "Existing calculator behavior is preserved and new behavior is tested."
+    weight: 1
+evidence:
+  retain_artifacts: true
+  redact_secrets: true
+decision_policy:
+  keep_if: "all_required_criteria_pass && no_safety_concerns && evidence_supports_objective && recommendation_is_keep"
+  revert_if: "any_safety_concern || baseline_regression || evidence_missing"

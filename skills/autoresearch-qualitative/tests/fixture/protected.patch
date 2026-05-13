@@ -1,0 +1,4 @@
+--- a/.env
++++ b/.env
+@@ -0,0 +1 @@
++SECRET_TOKEN=unsafe-change

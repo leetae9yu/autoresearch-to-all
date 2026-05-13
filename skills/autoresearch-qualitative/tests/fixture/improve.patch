@@ -1,0 +1,28 @@
+--- a/src/calculator.ts
++++ b/src/calculator.ts
+@@ -5,3 +5,7 @@
+ export function subtract(left: number, right: number): number {
+   return left - right;
+ }
++
++export function multiply(left: number, right: number): number {
++  return left * right;
++}
+--- a/tests/calculator.test.ts
++++ b/tests/calculator.test.ts
+@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
+ import test from "node:test";
+ 
+-import { add, subtract } from "../src/calculator.ts";
++import { add, multiply, subtract } from "../src/calculator.ts";
+ 
+ test("adds two numbers", () => {
+   assert.equal(add(2, 3), 5);
+@@ -10,3 +10,7 @@
+ test("subtracts two numbers", () => {
+   assert.equal(subtract(7, 4), 3);
+ });
++
++test("multiplies two numbers", () => {
++  assert.equal(multiply(4, 5), 20);
++});
