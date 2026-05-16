@@ -303,6 +303,29 @@ function normalizeInterview(config: any): any {
   };
 }
 
+function normalizeAgentHandoff(config: any, projectRoot: any): any {
+  const handoff = config.agent_handoff || config.worker || config.candidate_generator;
+  if (handoff === undefined) return null;
+  if (!handoff || typeof handoff !== "object" || Array.isArray(handoff)) {
+    throw new Error("Invalid required field: agent_handoff must be an object when provided");
+  }
+  const command = assertString(handoff, "command");
+  const normalized: Record<string, any> = { command };
+  if (handoff.template_path !== undefined) {
+    normalized.template_path = validatePathPattern(handoff.template_path, "agent_handoff.template_path");
+  }
+  for (const field of ["mission_path", "rubric_path", "objective"]) {
+    if (handoff[field] !== undefined) {
+      if (typeof handoff[field] !== "string" || handoff[field].trim() === "") {
+        throw new Error(`Invalid required field: agent_handoff.${field} must be a non-empty string`);
+      }
+      normalized[field] = handoff[field].trim();
+    }
+  }
+  normalized.project_root = projectRoot;
+  return normalized;
+}
+
 function resolveConfigPathFromArgs(argv: any): any {
   const args = Array.isArray(argv) ? argv : [];
   const configIndex = args.indexOf("--config");
@@ -371,6 +394,7 @@ function validateConfig(configPath: any, options: any = {}): any {
     protected_paths: normalizeProtectedPaths(config),
     allowed_commands: allowedCommands,
     baseline_commands: normalizeStringList(assertPresent(config, "baseline_commands"), "baseline_commands", { requireNonEmpty: true }),
+    agent_handoff: normalizeAgentHandoff(config, resolvedProjectRoot),
     judge: {
       mode: assertString(config, "judge.mode"),
       rubric: assertString(config, "judge.rubric"),

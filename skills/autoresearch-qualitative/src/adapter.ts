@@ -1,6 +1,7 @@
 import childProcess from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { LedgerStore, createLedgerEntry } from "./ledger.ts";
 
@@ -30,6 +31,27 @@ function runShellCommand(command: any, cwd: any): any {
     shell: true,
     encoding: "utf8",
     env: process.env,
+  });
+
+  return {
+    command: commandText,
+    cwd,
+    status: typeof result.status === "number" ? result.status : 1,
+    signal: result.signal || null,
+    stdout: result.stdout || "",
+    stderr: result.stderr || (result.error ? result.error.message : ""),
+    duration_ms: Date.now() - startedAt,
+  };
+}
+
+function runShellCommandWithEnv(command: any, cwd: any, env: any): any {
+  const startedAt = Date.now();
+  const commandText = commandToString(command);
+  const result = childProcess.spawnSync(commandText, {
+    cwd,
+    shell: true,
+    encoding: "utf8",
+    env: { ...process.env, ...env },
   });
 
   return {
@@ -203,6 +225,30 @@ function applyUnifiedDiff(projectRoot: any, diffText: any): any {
   return changedFiles;
 }
 
+function loadTextTemplate(templatePath: any): any {
+  return fs.readFileSync(templatePath, "utf8");
+}
+
+function substituteTemplate(template: any, values: any): any {
+  let result = String(template || "");
+  for (const [key, value] of Object.entries(values)) {
+    result = result.split(`{${key}}`).join(String(value ?? ""));
+  }
+  return result;
+}
+
+function resolveCandidateChangeFromArtifact(projectRoot: any, artifact: any): any {
+  const explicitChange = artifact.candidate_change || artifact.change || artifact.candidate;
+  if (explicitChange && typeof explicitChange === "object") return explicitChange;
+  if (typeof artifact.diff === "string" && artifact.diff.trim() !== "") return { diff: artifact.diff };
+  if (typeof artifact.patch === "string" && artifact.patch.trim() !== "") return { diff: artifact.patch };
+  if (typeof artifact.patch_path === "string" && artifact.patch_path.trim() !== "") return { patch_path: artifact.patch_path };
+  if (typeof artifact.diff_path === "string" && artifact.diff_path.trim() !== "") return { patch_path: artifact.diff_path };
+  const candidatePatchPath = path.join(projectRoot, ".autoresearch-runs", String(artifact.run_id || ""), String(artifact.patch_path || ""));
+  if (artifact.patch_path && fs.existsSync(candidatePatchPath)) return { patch_path: candidatePatchPath };
+  return null;
+}
+
 class DefaultAutoresearchAdapter {
   config: any;
   projectRoot: string;
@@ -255,6 +301,69 @@ class DefaultAutoresearchAdapter {
   }
 
   proposeExperiment(context: any = {}): any {
+    const handoff = this.config.agent_handoff || this.config.worker || this.config.candidate_generator;
+    if (handoff && typeof handoff === "object" && handoff.command) {
+      const iteration = Number.isInteger(context.iteration) ? context.iteration : 0;
+      const runDir = path.join(this.projectRoot, ".autoresearch-runs", this.runId, `iteration-${iteration}`);
+      const promptPath = path.join(runDir, "handoff.md");
+      const candidatePath = path.join(runDir, "candidate.json");
+      const templatePath = handoff.template_path
+        ? ensureInsideProject(this.projectRoot, handoff.template_path)
+        : path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "templates", "codex-goal-handoff.md");
+
+      fs.mkdirSync(runDir, { recursive: true });
+      const prompt = substituteTemplate(loadTextTemplate(templatePath), {
+        config_path: this.config.config_path || "(config object)",
+        mission_path: handoff.mission_path || promptPath,
+        rubric_path: handoff.rubric_path || "templates/rubric.md",
+        ledger_path: this.ledger.ledgerPath,
+        candidate_path: candidatePath,
+        iteration_objective: handoff.objective || context.hypothesis || this.config.objective,
+        run_id: this.runId,
+        iteration,
+      });
+      fs.writeFileSync(promptPath, prompt, "utf8");
+
+      const command = substituteTemplate(handoff.command, {
+        prompt_path: promptPath,
+        candidate_path: candidatePath,
+        run_id: this.runId,
+        iteration,
+      });
+      const result = runShellCommandWithEnv(command, this.projectRoot, {
+        AUTORESEARCH_PROMPT_PATH: promptPath,
+        AUTORESEARCH_CANDIDATE_PATH: candidatePath,
+        AUTORESEARCH_RUN_ID: this.runId,
+        AUTORESEARCH_ITERATION: String(iteration),
+      });
+      if (result.status !== 0) {
+        throw new Error(`agent handoff command failed: ${result.stderr || result.stdout || result.status}`);
+      }
+      if (!fs.existsSync(candidatePath)) {
+        throw new Error(`agent handoff did not write candidate artifact: ${candidatePath}`);
+      }
+      const artifact = JSON.parse(fs.readFileSync(candidatePath, "utf8"));
+      const status = artifact.status || "candidate";
+      if (status !== "candidate") {
+        return { stop: true, reason: `agent_${status}`, agent_handoff: { prompt_path: promptPath, candidate_path: candidatePath, command_result: result }, candidate_artifact: artifact };
+      }
+      const candidateChange = resolveCandidateChangeFromArtifact(this.projectRoot, artifact);
+      if (!candidateChange) {
+        throw new Error("agent candidate artifact did not include candidate_change, diff, or patch_path");
+      }
+      return {
+        objective: this.config.objective,
+        hypothesis: artifact.description || handoff.objective || context.hypothesis || "Agent-produced candidate.",
+        candidate_change: candidateChange,
+        agent_handoff: {
+          prompt_path: promptPath,
+          candidate_path: candidatePath,
+          command_result: result,
+        },
+        candidate_artifact: artifact,
+      };
+    }
+
     return {
       objective: this.config.objective,
       hypothesis: context.hypothesis || "No automatic proposal generated by the generic adapter.",

@@ -139,6 +139,30 @@ test("interview metadata can capture completed pre-run answers", () => {
   assert.equal(normalized.interview.answers.objective, "Improve onboarding");
 });
 
+test("agent handoff config is preserved for worker dispatch", () => {
+  const directory = createTempProject();
+  const configPath = writeConfig(directory, validConfig({
+    agent_handoff: {
+      command: "codex exec --skip-git-repo-check -C . \"read $AUTORESEARCH_PROMPT_PATH\"",
+      template_path: "handoff.md",
+      objective: "Generate one safe candidate.",
+    },
+  }));
+
+  const normalized = validateConfig(configPath);
+
+  assert.equal(normalized.agent_handoff.command.includes("codex exec"), true);
+  assert.equal(normalized.agent_handoff.template_path, "handoff.md");
+  assert.equal(normalized.agent_handoff.objective, "Generate one safe candidate.");
+});
+
+test("invalid agent handoff command fails config validation", () => {
+  const directory = createTempProject();
+  const configPath = writeConfig(directory, validConfig({ agent_handoff: { command: "" } }));
+
+  assert.throws(() => validateConfig(configPath), /agent_handoff must be an object|Missing required field: command|must be a non-empty string/);
+});
+
 test("missing config path causes explicit execution refusal", () => {
   assert.throws(() => requireExplicitConfigPath([]), /Refusing to execute without an explicit --config path/);
   assert.throws(() => validateConfig(""), /Refusing to execute without an explicit --config path/);

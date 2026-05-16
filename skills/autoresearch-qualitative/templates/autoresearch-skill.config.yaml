@@ -23,6 +23,11 @@ allowed_commands:
 baseline_commands:
   - npm test
 
+# Optional worker/subagent dispatch. The command receives AUTORESEARCH_PROMPT_PATH
+# and must write candidate.json to AUTORESEARCH_CANDIDATE_PATH.
+# agent_handoff:
+#   command: "omx exec --skip-git-repo-check -C . \"Read $AUTORESEARCH_PROMPT_PATH and write $AUTORESEARCH_CANDIDATE_PATH\""
+
 judge:
   mode: host-agent
   rubric: "Keep changes only when evidence shows the objective improved without weakening safety, maintainability, or user-facing correctness."

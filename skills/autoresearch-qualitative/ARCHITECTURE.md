@@ -11,7 +11,7 @@ Internal modules:
 
 1. `config` — config validation and defaults. Validates required fields, normalizes paths, applies conservative defaults only for template generation or explicit config completion, and fails closed when required budgets or authorities are missing.
 2. `safety` — preflight checks and sandbox controls. Verifies workspace boundaries, protected paths, allowed commands, budget limits, evidence redaction settings, and mutation constraints before baseline or experiment steps run.
-3. `adapter` — project discovery, baseline, experiment, evidence. Provides project-specific discovery, baseline command execution, bounded experiment application, evidence collection, artifact summarization, and keep/revert operations within the declared workspace.
+3. `adapter` — project discovery, baseline, agent handoff, experiment, evidence. Provides project-specific discovery, baseline command execution, worker/subagent prompt dispatch, candidate artifact parsing, bounded experiment application, evidence collection, artifact summarization, and keep/revert operations within the declared workspace.
 4. `loop` — unattended experiment orchestration. Coordinates iterations, budget accounting, baseline references, experiment attempts, judge calls, decision policy evaluation, revert/keep actions, and stop conditions.
 5. `judge` — LLM-as-judge prompt orchestration. Builds rubric-grounded prompts for host-agent/subagent review, supplies evidence bundles, captures score vectors, rationale, uncertainty, safety concerns, and anti-gaming observations.
 6. `ledger` — immutable experiment record keeping. Appends run and iteration records, stores references to evidence artifacts, captures decisions and failures, and prevents silent mutation of historical entries.
@@ -26,7 +26,7 @@ The required run flow is:
 1. **Config**: The Skill front door receives an explicit config path. Before execution, the host agent runs the pre-run interview and captures answers in config metadata. `config` validates schema, required budgets, declared workspace, allowed commands, judge settings, criteria, evidence policy, interview metadata, and decision policy.
 2. **Preflight**: `safety` checks the normalized config against filesystem boundaries, protected paths, budget values, command allowlists, and sandbox controls. Failure stops the run before mutation.
 3. **Baseline**: `adapter` discovers the project and executes configured baseline checks. Baseline outputs and artifact summaries become evidence references.
-4. **Experiment**: `loop` requests one bounded experiment at a time through `adapter`, constrained by mutation scopes, budgets, protected paths, and allowed commands.
+4. **Experiment**: `loop` requests one bounded experiment at a time through `adapter`. If `agent_handoff.command` is configured, the adapter writes a handoff prompt, executes the worker command, parses `candidate.json`, and returns the candidate change. All candidates remain constrained by mutation scopes, budgets, protected paths, and allowed commands.
 5. **Judge**: `judge` prepares host-agent/subagent review prompts using baseline evidence, experiment evidence, diffs, command outputs, configured criteria, and rubric text.
 6. **Decision**: `loop` evaluates judge scores, command results, safety signals, and decision policy to keep, revert, retry, or stop.
 7. **Ledger**: `ledger` appends the immutable iteration record, including the decision and evidence references, regardless of success, rejection, or failure.

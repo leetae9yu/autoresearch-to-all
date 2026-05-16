@@ -12,6 +12,8 @@ The authoritative run state is the autoresearch artifact set:
 - Ledger: `{ledger_path}`
 - Candidate contract: `{candidate_path}`
 
+The worker/subagent receives this prompt through `AUTORESEARCH_PROMPT_PATH` and must write the candidate artifact to `AUTORESEARCH_CANDIDATE_PATH`.
+
 ## Codex instructions
 
 1. If no active Codex goal exists, create one for this iteration objective:
@@ -20,7 +22,7 @@ The authoritative run state is the autoresearch artifact set:
 2. Work only inside the declared project root and mutation scope.
 3. Do not modify protected paths.
 4. Run only configured allowed commands.
-5. When the iteration is complete, write `{candidate_path}` using the candidate contract schema.
+5. When the iteration is complete, write `{candidate_path}` using the candidate contract schema, including `candidate_change.diff` or `candidate_change.patch_path` when status is `candidate`.
 6. Do not decide keep/revert yourself. The harness owns evaluation, judging, ledger updates, and keep/revert.
 
 ## Candidate status meanings

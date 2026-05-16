@@ -228,9 +228,11 @@ function assertBudgets(config: any, workspaceState: any): any {
 
 function assertCommands(config: any): any {
   const executionMode = isExecutionMode(config.mode);
+  const handoff = config.agent_handoff || config.worker || config.candidate_generator;
   const declaredCommands = [
     ...(Array.isArray(config.allowed_commands) ? config.allowed_commands : []),
     ...(executionMode && Array.isArray(config.baseline_commands) ? config.baseline_commands : []),
+    ...(handoff && typeof handoff === "object" && handoff.command ? [handoff.command] : []),
   ];
 
   if (executionMode && config.allowed_commands.length === 0) {

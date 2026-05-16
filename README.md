@@ -54,7 +54,7 @@ curl -fsSL https://raw.githubusercontent.com/leetae9yu/autoresearch-to-all/main/
 
 ## Codex goal handoff
 
-The Skill treats Codex `/goal` as an iteration-local continuation tool, not as durable run state. The harness owns config validation, safety preflight, candidate validation, judge calls, keep/revert decisions, ledger entries, and reports.
+The Skill treats Codex `/goal` or any configured worker command as an iteration-local continuation tool, not as durable run state. The harness owns config validation, safety preflight, candidate validation, judge calls, keep/revert decisions, ledger entries, and reports.
 
 ## Pre-run interview
 
@@ -71,8 +71,8 @@ Useful templates:
 Recommended flow:
 
 1. The harness creates/fills mission, rubric, and ledger paths.
-2. Codex uses `/goal` only to continue one candidate-producing iteration.
-3. Codex writes `candidate.json` using the candidate contract.
+2. If `agent_handoff.command` is configured, the adapter writes `handoff.md` and runs the worker/subagent command.
+3. The worker writes `candidate.json` using the candidate contract, including `candidate_change.diff` or `candidate_change.patch_path`.
 4. The harness evaluates, judges, and decides keep/revert.
 
 ## Verify

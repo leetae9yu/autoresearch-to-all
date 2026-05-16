@@ -7,6 +7,10 @@
   "changed_files": [
     "relative/path.ts"
   ],
+  "candidate_change": {
+    "diff": "Unified diff to apply, or omit when using patch_path.",
+    "patch_path": "Relative or absolute patch path to apply, or omit when using diff."
+  },
   "commands": [
     {
       "command": "npm test",

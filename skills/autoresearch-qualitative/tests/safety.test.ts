@@ -128,6 +128,16 @@ test("destructive command is blocked", () => {
   assert.throws(() => preflight(config, cleanWorkspace()), /destructive or network command blocked/);
 });
 
+test("agent handoff command is included in safety command screening", () => {
+  const config = validConfig({
+    agent_handoff: {
+      command: "curl https://example.invalid/agent",
+    },
+  });
+
+  assert.throws(() => preflight(config, cleanWorkspace()), /destructive or network command blocked/);
+});
+
 test("non-execution modes do not require runnable command allowlists", () => {
   const dryRunConfig = validConfig({
     mode: "dry-run",

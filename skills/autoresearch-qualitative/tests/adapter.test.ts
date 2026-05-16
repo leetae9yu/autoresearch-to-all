@@ -93,6 +93,73 @@ test("adapter rejects check commands not declared in allowed_commands", () => {
   );
 });
 
+test("adapter dispatches an agent handoff command and parses candidate artifact", () => {
+  const projectRoot = createTempProject();
+  fs.writeFileSync(path.join(projectRoot, "note.txt"), "before\n");
+  const workerPath = path.join(projectRoot, "worker.mjs");
+  fs.writeFileSync(workerPath, `
+import fs from "node:fs";
+const candidatePath = process.env.AUTORESEARCH_CANDIDATE_PATH;
+const promptPath = process.env.AUTORESEARCH_PROMPT_PATH;
+if (!fs.existsSync(promptPath)) throw new Error("missing prompt");
+fs.writeFileSync(candidatePath, JSON.stringify({
+  schema_version: 1,
+  status: "candidate",
+  description: "Agent changed note text.",
+  changed_files: ["note.txt"],
+  candidate_change: {
+    diff: ["--- a/note.txt", "+++ b/note.txt", "@@ -1 +1 @@", "-before", "+after", ""].join("\\n")
+  },
+  commands: [],
+  evidence_paths: [],
+  notes: [],
+  created_at: "2026-05-13T00:00:00.000Z"
+}, null, 2));
+`);
+  const adapter = new DefaultAutoresearchAdapter(baseConfig(projectRoot, {
+    agent_handoff: {
+      command: `node ${workerPath}`,
+    },
+  }), { run_id: "agent-run" });
+
+  const proposal = adapter.proposeExperiment({ iteration: 0 });
+  const applied = adapter.applyChange(proposal.candidate_change);
+
+  assert.equal(proposal.hypothesis, "Agent changed note text.");
+  assert.equal(fs.existsSync(proposal.agent_handoff.prompt_path), true);
+  assert.equal(fs.existsSync(proposal.agent_handoff.candidate_path), true);
+  assert.equal(applied.applied, true);
+  assert.equal(fs.readFileSync(path.join(projectRoot, "note.txt"), "utf8"), "after\n");
+});
+
+test("adapter stops when agent handoff returns noop", () => {
+  const projectRoot = createTempProject();
+  const workerPath = path.join(projectRoot, "noop-worker.mjs");
+  fs.writeFileSync(workerPath, `
+import fs from "node:fs";
+fs.writeFileSync(process.env.AUTORESEARCH_CANDIDATE_PATH, JSON.stringify({
+  schema_version: 1,
+  status: "noop",
+  description: "No useful candidate found.",
+  changed_files: [],
+  commands: [],
+  evidence_paths: [],
+  notes: [],
+  created_at: "2026-05-13T00:00:00.000Z"
+}));
+`);
+  const adapter = new DefaultAutoresearchAdapter(baseConfig(projectRoot, {
+    agent_handoff: {
+      command: `node ${workerPath}`,
+    },
+  }), { run_id: "noop-agent-run" });
+
+  const proposal = adapter.proposeExperiment({ iteration: 0 });
+
+  assert.equal(proposal.stop, true);
+  assert.equal(proposal.reason, "agent_noop");
+});
+
 test("adapter restores snapshot when fallback patch application fails", () => {
   const projectRoot = createTempProject();
   fs.writeFileSync(path.join(projectRoot, "first.txt"), "one\n");

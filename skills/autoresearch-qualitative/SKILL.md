@@ -29,13 +29,14 @@ The Skill must refuse execution when the config is absent, incomplete, or outsid
 
 ## Config
 
-The config is the run authority. It declares the project root, objective, budgets, protected paths, allowed commands, baseline commands, judge mode, rubric, criteria, evidence policy, and decision policy.
+The config is the run authority. It declares the project root, objective, budgets, protected paths, allowed commands, baseline commands, optional agent handoff command, judge mode, rubric, criteria, evidence policy, and decision policy.
 
 Config responsibilities:
 
 - Define the workspace where mutation is allowed.
 - Set required budgets such as max iterations, max runtime, and max diff size.
 - List commands that the Skill may execute.
+- Optionally define `agent_handoff.command` for a worker/subagent process that receives a handoff prompt and writes a candidate artifact.
 - List paths that must never be modified.
 - Describe judge criteria and rubric inputs.
 - Define evidence retention and redaction behavior.
@@ -60,6 +61,21 @@ Minimum interview topics:
 - artifact retention and redaction requirements
 
 Record the result under `interview` in the config. A completed interview should set `interview.status: completed` and include the answers used to derive `objective`, `allowed_commands`, `baseline_commands`, `protected_paths`, budgets, evidence policy, and decision policy. If the operator explicitly skips the interview, set `interview.status: skipped` and record the reason; skipping never relaxes required config validation.
+
+## Agent Handoff
+
+When `agent_handoff.command` is configured, `DefaultAutoresearchAdapter.proposeExperiment()` performs an actual worker dispatch instead of returning a placeholder proposal:
+
+1. Create `.autoresearch-runs/<run_id>/iteration-<n>/handoff.md` from `templates/codex-goal-handoff.md`.
+2. Execute `agent_handoff.command` in `project_root` with these environment variables:
+   - `AUTORESEARCH_PROMPT_PATH`
+   - `AUTORESEARCH_CANDIDATE_PATH`
+   - `AUTORESEARCH_RUN_ID`
+   - `AUTORESEARCH_ITERATION`
+3. Require the worker to write `candidate.json` at `AUTORESEARCH_CANDIDATE_PATH`.
+4. Parse `candidate_change.diff` or `candidate_change.patch_path` from that artifact and apply it through the normal safety/judge/ledger loop.
+
+The handoff command is screened by safety preflight for destructive or network patterns. The worker may be Codex, OMX, another CLI agent, or a local script, as long as it consumes the prompt path and writes the candidate contract.
 
 ## Safety
 
