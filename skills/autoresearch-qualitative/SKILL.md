@@ -1,3 +1,8 @@
+---
+name: autoresearch-to-all
+description: Run guarded qualitative autoresearch loops with pre-run interview, safety preflight, evidence capture, judge review, keep/revert decisions, ledger entries, and final reports.
+---
+
 # Autoresearch Qualitative Skill
 
 ## Purpose
